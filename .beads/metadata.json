@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "musicsync",
+  "project_id": "51565195-096c-4db5-865c-076057681638"
+}
