@@ -88,12 +88,14 @@ This is more setup than a plain shared folder, but it's the more secure option: 
 ## 6. Try it manually once, before automating
 
 ```sh
-# on iMac and MacAir:
+# on iMac and MacAir (the peers -- central scans itself as part of run-central below):
 python3 -m musicsync.cli scan
 
 # then on MacMini:
 python3 -m musicsync.cli run-central
 ```
+
+`run-central` scans the central machine's own music first, then pulls both peers, merges, re-imports the owned library, and reports -- so the peers need their own `scan` run (and up to date) *before* you run `run-central`, but the central machine doesn't need a separate `scan` step of its own.
 
 Open `~/.musicsync/reports/latest.html` on the mini in a browser. Check the counts look sane before moving on to scheduling.
 
@@ -109,7 +111,7 @@ sed "s|__REPO_DIR__|$REPO_DIR|g" launchd/com.paulryan.musicsync.scan.plist > ~/L
 launchctl load ~/Library/LaunchAgents/com.paulryan.musicsync.scan.plist
 ```
 
-On the **central machine only**, additionally install the pull+merge+report job (runs an hour later, so both peers have finished scanning):
+On the **central machine only**, additionally install the pull+merge+report job (runs an hour later, so both peers have finished scanning). It scans the central machine itself too, so its own scan job above is redundant but harmless to also have installed:
 
 ```sh
 sed "s|__REPO_DIR__|$REPO_DIR|g" launchd/com.paulryan.musicsync.central.plist > ~/Library/LaunchAgents/com.paulryan.musicsync.central.plist

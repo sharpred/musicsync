@@ -17,7 +17,7 @@ def main(argv=None) -> int:
     sub.add_parser("merge", help="(central only) Merge own + pulled snapshots into library.db")
     sub.add_parser("import-owned", help="(central only) Import Music.app Library.xml as the owned list")
     sub.add_parser("report", help="(central only) Generate the missing-tracks report")
-    sub.add_parser("run-central", help="(central only) pull + merge + import-owned + report")
+    sub.add_parser("run-central", help="(central only) scan + pull + merge + import-owned + report")
 
     args = parser.parse_args(argv)
     cfg = config_mod.load_config(args.config)
@@ -33,6 +33,7 @@ def main(argv=None) -> int:
     elif args.command == "report":
         report.write_reports(cfg)
     elif args.command == "run-central":
+        scan.main(cfg)
         pull.pull(cfg)
         merge.merge(cfg)
         import_owned.import_owned(cfg)
