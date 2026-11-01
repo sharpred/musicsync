@@ -21,15 +21,33 @@ from .config import AppConfig
 from .normalize import track_key
 
 
-def parse_library_xml(path: str) -> list[dict]:
+def _is_podcast(t: dict) -> bool:
+    """iTunes/Music store podcast episodes in the same Tracks dict as songs."""
+    if t.get("Podcast"):
+        return True
+    if (t.get("Genre") or "").strip().lower() == "podcast":
+        return True
+    if "podcast" in (t.get("Kind") or "").strip().lower():
+        return True
+    # Podcast-only fields that never appear on a music track.
+    if "Episode Order" in t or "Episode Global ID" in t:
+        return True
+    return False
+
+
+def parse_library_xml(path: str) -> tuple[list[dict], int]:
     with open(path, "rb") as f:
         data = plistlib.load(f)
 
     tracks = data.get("Tracks", {})
     records = []
+    skipped_podcasts = 0
     for track_id, t in tracks.items():
         name = t.get("Name")
         if not name:
+            continue
+        if _is_podcast(t):
+            skipped_podcasts += 1
             continue
         artist = t.get("Artist")
         album = t.get("Album")
@@ -45,7 +63,7 @@ def parse_library_xml(path: str) -> list[dict]:
                 has_local_location=has_location,
             )
         )
-    return records
+    return records, skipped_podcasts
 
 
 def import_owned(config: AppConfig) -> None:
@@ -56,7 +74,7 @@ def import_owned(config: AppConfig) -> None:
         print(f"WARNING: owned_library_xml not found: {config.owned_library_xml}")
         return
 
-    records = parse_library_xml(config.owned_library_xml)
+    records, skipped_podcasts = parse_library_xml(config.owned_library_xml)
 
     lib_path = os.path.join(config.state_dir, "library.db")
     conn = db.connect(lib_path)
@@ -65,4 +83,7 @@ def import_owned(config: AppConfig) -> None:
     conn.commit()
     conn.close()
 
-    print(f"Imported {len(records)} owned tracks from {config.owned_library_xml}")
+    print(
+        f"Imported {len(records)} owned tracks from {config.owned_library_xml} "
+        f"(skipped {skipped_podcasts} podcast episode(s))"
+    )
