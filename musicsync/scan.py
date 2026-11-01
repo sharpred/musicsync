@@ -35,11 +35,17 @@ def read_tags(path: str):
     duration = None
     try:
         mf = MutagenFile(path, easy=True)
-    except Exception:
+    except Exception as e:
+        print(f"  WARNING: could not read tags from {path}: {e!r}")
         mf = None
+    else:
+        if mf is None:
+            print(f"  WARNING: mutagen didn't recognize file type, no tags read: {path}")
 
     if mf is not None:
         tags = mf.tags or {}
+        if not tags:
+            print(f"  WARNING: file opened but has no tags at all (untagged or DRM?): {path}")
 
         def first(key):
             v = tags.get(key)
