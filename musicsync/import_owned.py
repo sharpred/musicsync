@@ -1,13 +1,14 @@
-"""Imports a Music.app Library.xml export as the canonical "what I own" list.
+"""Imports an iTunes/Music.app Library.xml export as the canonical "what I own" list.
 
-Must be the full library export (Music.app: File > Library > Export Library...),
-NOT "Export Playlist" on the Purchased smart list. Export Playlist writes an
-.m3u8 of local file paths, so any purchased-but-not-downloaded track (no local
-file) is silently dropped before it ever reaches this tool. Export Library
-writes a plist/XML with one entry per track containing Name/Artist/Album
-regardless of whether it's downloaded, plus a "Location" key only when a local
-file exists -- which is exactly the "what do I own, and is it downloaded here"
-signal this tool needs.
+Must be the full library export -- File > Library > Export Library... in
+either iTunes (High Sierra and earlier) or Music.app (Catalina and later;
+same menu, same underlying XML format) -- NOT "Export Playlist" on the
+Purchased smart list. Export Playlist writes an .m3u8 of local file paths, so
+any purchased-but-not-downloaded track (no local file) is silently dropped
+before it ever reaches this tool. Export Library writes a plist/XML with one
+entry per track containing Name/Artist/Album regardless of whether it's
+downloaded, plus a "Location" key only when a local file exists -- which is
+exactly the "what do I own, and is it downloaded here" signal this tool needs.
 """
 
 from __future__ import annotations

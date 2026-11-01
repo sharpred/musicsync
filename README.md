@@ -5,7 +5,7 @@ Tracks which music files exist on which of your 3 Macs, and reports:
 - Tracks you own that are **missing from the iMac** (but present on the Air or mini), with where they actually are.
 - Tracks you own that are **missing from all 3 machines** entirely (purchased/ripped but not downloaded anywhere).
 
-"Own" is determined by exporting your Music.app library as the canonical reference — see step 4.
+"Own" is determined by exporting your iTunes/Music library as the canonical reference — see step 4.
 
 ## How it works
 
@@ -49,17 +49,17 @@ cp config.example.toml musicsync.toml
 
 Edit `musicsync.toml` **on each machine separately** (it's gitignored — never committed, since paths differ per machine):
 
-- **iMac** (user `paulryanwork`): `host_label = "iMac"`, `role = "agent"`, `music_roots` pointing at wherever your ripped CDs + purchases actually live (check both `~/Music/iTunes/iTunes Media/Music` and `~/Music/Music/Media.localized/Music` — High Sierra may have either depending on whether you've opened the newer Music app).
+- **iMac** (user `paulryanwork`): `host_label = "iMac"`, `role = "agent"`, `music_roots` pointing at `~/Music/iTunes/iTunes Media/Music` (the iTunes location — that's what's still running on High Sierra).
 - **MacAir**: `host_label = "MacAir"`, `role = "agent"`, `music_roots` for whatever's local here.
 - **MacMini**: `host_label = "MacMini"`, `role = "central"`, plus the `peers` list and `owned_library_xml` (see step 4).
 
 All three should set `primary_host = "iMac"` — that's what "missing from iMac" is measured against.
 
-## 4. Export your Music library as the "what I own" reference
+## 4. Export your library as the "what I own" reference
 
-On **whichever Mac has Music.app with your fullest library view** (probably the iMac):
+On **whichever Mac has your fullest library view** (probably the iMac) — this is **iTunes** on High Sierra, or **Music.app** on newer macOS. Same menu, same underlying XML format either way:
 
-**Music.app → File → Library → Export Library...** → save as `Library.xml`.
+**(iTunes or Music.app) → File → Library → Export Library...** → save as `Library.xml`.
 
 Important: this must be **Export Library**, not **Export Playlist** on the "Purchased" smart list. Export Playlist writes an `.m3u8` of local file paths — any purchased track you haven't downloaded has no local path, so it's silently dropped. Export Library writes one entry per track with Name/Artist/Album *regardless* of download status, which is what lets this tool detect "owned but not downloaded anywhere."
 

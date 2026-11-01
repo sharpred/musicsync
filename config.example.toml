@@ -29,8 +29,10 @@ primary_host = "iMac"
 
 # --- central-only settings below ---
 
-# Path to a Library.xml exported from Music.app via:
+# Path to a Library.xml exported via:
 #   File > Library > Export Library...
+# in iTunes (High Sierra) or Music.app (newer macOS) -- same menu, same
+# underlying XML format either way.
 # (NOT "Export Playlist" on a Purchased smart list -- that skips any
 # purchased-but-not-downloaded track entirely. See import_owned.py docstring.)
 owned_library_xml = "~/.musicsync/Library.xml"
