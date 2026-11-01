@@ -1,4 +1,4 @@
-"""Pulls the other two machines' snapshot.db files to the central machine over SSH.
+"""Pulls every peer machine's snapshot.db file to the central machine over SSH.
 
 Uses a dedicated key pair (see scripts/setup_ssh.sh) so this never touches the
 user's personal SSH keys, and BatchMode so a misconfigured host fails fast

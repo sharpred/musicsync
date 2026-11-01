@@ -1,5 +1,5 @@
 #!/bin/sh
-# Invoked by launchd on the central machine only. Pulls both peers, merges,
+# Invoked by launchd on the central machine only. Pulls every peer, merges,
 # re-imports the owned-library XML, and writes a fresh report. Uses the
 # repo's own .venv explicitly, for the same reason as run_scan.sh.
 cd "$(dirname "$0")/.."

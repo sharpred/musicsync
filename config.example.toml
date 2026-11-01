@@ -5,7 +5,7 @@
 # Short label used in reports. Use the same three labels everywhere: "iMac", "MacAir", "MacMini".
 host_label = "MacMini"
 
-# "central" = this machine pulls from the other two, merges, and reports.
+# "central" = this machine pulls from every other peer, merges, and reports.
 # "agent"   = this machine only scans itself and waits to be pulled from.
 # Pick ONE machine as central (Air or mini, per the setup chat -- mini recommended
 # as the one most likely to be always-on).
@@ -37,10 +37,11 @@ primary_host = "iMac"
 # purchased-but-not-downloaded track entirely. See import_owned.py docstring.)
 owned_library_xml = "~/.musicsync/Library.xml"
 
-# The other two machines, pulled over SSH using a dedicated key (see
+# Every other peer machine, pulled over SSH using a dedicated key (see
 # scripts/setup_ssh.sh and the README). remote_snapshot_path is wherever
 # THAT machine's own state_dir/snapshot.db ends up -- i.e. "<their
-# state_dir>/snapshot.db".
+# state_dir>/snapshot.db". Add as many [[peers]] blocks as you have
+# machines -- there's no limit, every entry gets pulled and merged.
 [[peers]]
 label = "iMac"
 user = "paulryanwork"
@@ -54,3 +55,11 @@ user = "paulryan"
 host = "macair.local"
 ssh_key = "~/.ssh/musicsync_ed25519"
 remote_snapshot_path = "/Users/paulryan/.musicsync/snapshot.db"
+
+# To add another machine, copy one of the blocks above and edit it, e.g.:
+# [[peers]]
+# label = "MacPro"
+# user = "paulryan"
+# host = "macpro.local"
+# ssh_key = "~/.ssh/musicsync_ed25519"
+# remote_snapshot_path = "/Users/paulryan/.musicsync/snapshot.db"

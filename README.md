@@ -1,19 +1,22 @@
 # musicsync
 
-Tracks which music files exist on which of your 3 Macs, and reports:
+Tracks which music files exist on which of your Macs, and reports:
 
-- Tracks you own that are **missing from the iMac** (but present on the Air or mini), with where they actually are.
-- Tracks you own that are **missing from all 3 machines** entirely (purchased/ripped but not downloaded anywhere).
+- Tracks you own that are **missing from the iMac** (but present on another machine), with where they actually are.
+- Tracks you own that are **missing from every machine** entirely (purchased/ripped but not downloaded anywhere).
+
+Works with any number of machines — add more any time by adding another `[[peers]]` block (see "Adding another machine" below).
 
 "Own" is determined by exporting your iTunes/Music library as the canonical reference — see step 4.
 
 ## How it works
 
-One copy of this repo is cloned onto **all three Macs**. Each machine scans its own music folders into a local `snapshot.db` (artist/title/album/path, no audio data). One machine is designated **central** (recommended: Mac mini, since it's most likely to be always-on) — it pulls the other two machines' snapshots over SSH, merges everything into `library.db`, cross-checks against your exported Music library, and writes a report.
+One copy of this repo is cloned onto **every machine**. Each machine scans its own music folders into a local `snapshot.db` (artist/title/album/path, no audio data). One machine is designated **central** (recommended: Mac mini, since it's most likely to be always-on) — it pulls every other machine's snapshot over SSH, merges everything into `library.db`, cross-checks against your exported Music library, and writes a report.
 
 ```
-iMac (agent)  ──┐
-MacAir (agent)──┼──(SSH pull)──> MacMini (central) ──> library.db ──> report.html / report.csv
+iMac (agent)   ──┐
+MacAir (agent) ──┼──(SSH pull)──> MacMini (central) ──> library.db ──> report.html / report.csv
+MacPro (agent) ──┘
 MacMini (central, scans itself too)
 ```
 
@@ -69,33 +72,33 @@ Copy that `Library.xml` to the central machine (MacMini) at the path set in `own
 
 Re-export and re-copy this periodically as your library/purchases change.
 
-## 5. Set up SSH so the central machine can pull from the other two
+## 5. Set up SSH so the central machine can pull from every peer
 
-On **each of the two non-central Macs** (iMac, MacAir if mini is central):
+On **each non-central Mac**:
 **System Settings → General → Sharing → Remote Login → On.**
 
-On the **central machine**, generate a dedicated key and distribute it:
+On the **central machine**, generate a dedicated key and distribute it to every peer in one go:
 
 ```sh
 cd ~/musicsync
 scripts/setup_ssh.sh paulryanwork@imac.local paulryan@macair.local
 ```
 
-This creates `~/.ssh/musicsync_ed25519` (used only for this, no passphrase so launchd can run unattended) and copies the public key to both peers via `ssh-copy-id`, then verifies passwordless login works. Update `musicsync.toml`'s `peers` entries with the right `host`/`user`/`remote_snapshot_path` (that's `<their state_dir>/snapshot.db`, default `~/.musicsync/snapshot.db`) if you haven't already.
+This creates `~/.ssh/musicsync_ed25519` (used only for this, no passphrase so launchd can run unattended) and copies the public key to each peer listed via `ssh-copy-id`, then verifies passwordless login works. Update `musicsync.toml`'s `peers` entries with the right `host`/`user`/`remote_snapshot_path` (that's `<their state_dir>/snapshot.db`, default `~/.musicsync/snapshot.db`) if you haven't already.
 
 This is more setup than a plain shared folder, but it's the more secure option: key-based auth instead of a password-protected network share, and nothing is exposed except SSH (which you likely already use).
 
 ## 6. Try it manually once, before automating
 
 ```sh
-# on iMac and MacAir (the peers -- central scans itself as part of run-central below):
+# on every peer machine (central scans itself as part of run-central below):
 python3 -m musicsync.cli scan
 
-# then on MacMini:
+# then on the central machine:
 python3 -m musicsync.cli run-central
 ```
 
-`run-central` scans the central machine's own music first, then pulls both peers, merges, re-imports the owned library, and reports -- so the peers need their own `scan` run (and up to date) *before* you run `run-central`, but the central machine doesn't need a separate `scan` step of its own.
+`run-central` scans the central machine's own music first, then pulls every peer, merges, re-imports the owned library, and reports -- so each peer needs its own `scan` run (and up to date) *before* you run `run-central`, but the central machine doesn't need a separate `scan` step of its own.
 
 Open `~/.musicsync/reports/latest.html` on the mini in a browser. Check the counts look sane before moving on to scheduling.
 
@@ -111,7 +114,7 @@ sed "s|__REPO_DIR__|$REPO_DIR|g" launchd/com.paulryan.musicsync.scan.plist > ~/L
 launchctl load ~/Library/LaunchAgents/com.paulryan.musicsync.scan.plist
 ```
 
-On the **central machine only**, additionally install the pull+merge+report job (runs an hour later, so both peers have finished scanning). It scans the central machine itself too, so its own scan job above is redundant but harmless to also have installed:
+On the **central machine only**, additionally install the pull+merge+report job (runs an hour later, so every peer has finished scanning). It scans the central machine itself too, so its own scan job above is redundant but harmless to also have installed:
 
 ```sh
 sed "s|__REPO_DIR__|$REPO_DIR|g" launchd/com.paulryan.musicsync.central.plist > ~/Library/LaunchAgents/com.paulryan.musicsync.central.plist
@@ -127,11 +130,11 @@ To stop a job: `launchctl unload ~/Library/LaunchAgents/com.paulryan.musicsync.s
 The monthly run is a baseline, not a limit — run any step manually whenever you want a fresh picture:
 
 ```sh
-# on iMac or MacAir, whenever you've added music:
+# on any peer machine, whenever you've added music:
 cd ~/musicsync && source .venv/bin/activate
 python3 -m musicsync.cli scan
 
-# on MacMini, whenever you want an up-to-date report:
+# on the central machine, whenever you want an up-to-date report:
 cd ~/musicsync && source .venv/bin/activate
 python3 -m musicsync.cli run-central
 ```
@@ -142,10 +145,23 @@ Worth doing on demand right after a CD-ripping session or a purchase, rather tha
 
 `~/.musicsync/reports/latest.html` (and `latest.csv`) on the central machine, two sections:
 
-- **Missing from iMac** — you own it, it's on the Air or mini, but not the iMac. Shows which machine(s) have it.
-- **Missing from every machine** — you own it per `Library.xml` but it isn't on any of the 3 scanned machines (e.g. a cloud purchase you never downloaded).
+- **Missing from iMac** — you own it, it's on another machine, but not the iMac. Shows which machine(s) have it.
+- **Missing from every machine** — you own it per `Library.xml` but it isn't on any scanned machine (e.g. a cloud purchase you never downloaded).
 
 Matching is fuzzy (normalized artist+title, ignoring case/punctuation/"remastered"/"feat." noise) since a CD rip's tags rarely match a purchased copy's exactly. It's tuned for "roughly the same song," not byte-for-byte identity — expect the occasional false match/miss on things like live vs. studio versions of the same title.
+
+## Adding another machine
+
+There's no limit on how many machines this tracks — `peers` in the central `musicsync.toml` is just a list, and every entry gets pulled, merged, and reported on. To add one:
+
+1. **On the new machine**: install Python 3, clone/copy this repo, `pip install -r requirements.txt`, turn on Remote Login (System Settings → General → Sharing), and create its own `musicsync.toml` from `config.example.toml` — `role = "agent"`, a `host_label` not already used by another machine, and its `music_roots`.
+2. **On the central machine**: distribute the existing SSH key to the new machine (reuses the key already at `~/.ssh/musicsync_ed25519` rather than generating a new one):
+   ```sh
+   scripts/setup_ssh.sh newuser@newmachine.local
+   ```
+3. **On the central machine's `musicsync.toml`**: add a `[[peers]]` block for it (there's a commented-out template at the bottom of `config.example.toml`).
+4. Run `python3 -m musicsync.cli scan` on the new machine, then `python3 -m musicsync.cli run-central` on the central machine to confirm it shows up in the merged report.
+5. If you want it on the monthly schedule too, install the scan launchd job on it (step 7).
 
 ## Re-running after changes
 

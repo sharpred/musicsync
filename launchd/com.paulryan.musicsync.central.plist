@@ -3,7 +3,7 @@
 <!--
   Runs pull + merge + import-owned + report on the CENTRAL machine only,
   once a month -- the 1st at 03:00, an hour after the scan plist, to give
-  both peers time to finish their own local scans first. (You can also
+  every peer time to finish their own local scans first. (You can also
   always run this on demand: see the README "Running it on demand" section.)
 
   Before installing, replace __REPO_DIR__ below with the absolute path to
