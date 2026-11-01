@@ -1,7 +1,8 @@
 #!/bin/sh
-# Invoked by launchd (see launchd/*.plist). launchd's default PATH is tiny,
-# so we widen it here to cover Homebrew, python.org installs, and pyenv.
+# Invoked by launchd (see launchd/*.plist). Uses the repo's own .venv
+# explicitly -- not plain `python3` off $PATH -- so a scheduled run always
+# gets the interpreter that actually has mutagen installed, regardless of
+# what the system's default python3 happens to be.
 cd "$(dirname "$0")/.."
 mkdir -p logs
-export PATH="/usr/local/bin:/opt/homebrew/bin:$HOME/.pyenv/shims:$PATH"
-exec python3 -m musicsync.cli scan --config musicsync.toml
+exec .venv/bin/python3 -m musicsync.cli scan --config musicsync.toml

@@ -17,7 +17,7 @@ MacAir (agent)──┼──(SSH pull)──> MacMini (central) ──> library
 MacMini (central, scans itself too)
 ```
 
-Everything is plain files (sqlite + a Python stdlib/mutagen script) — no server process, no daemon beyond a daily launchd timer.
+Everything is plain files (sqlite + a Python stdlib/mutagen script) — no server process, no daemon beyond a monthly launchd timer.
 
 ## 1. Install Python 3 on all three Macs
 
@@ -27,7 +27,9 @@ This Mac Air and the Mac mini are on a current macOS and likely already have Pyt
 python3 --version   # want 3.9 or newer
 ```
 
-The **High Sierra iMac** does not ship a usable Python 3. Install one from <https://www.python.org/downloads/macos/> — pick a 3.9–3.12 universal installer `.pkg` (these support back to macOS 10.9, so High Sierra is fine). Do **not** rely on Homebrew there; recent Homebrew has dropped High Sierra support.
+The **High Sierra iMac** does not ship a usable Python 3. Install one from <https://www.python.org/downloads/macos/> — but pin the version carefully: recent releases (3.13, 3.14) raise the installer's minimum macOS version to 10.15+, and will fail at runtime with a `dyld`/`____chkstk_darwin` error if you run them on 10.13. Instead, scroll to **"Looking for a specific release?"** and install **Python 3.9.13** — the last 3.9.x release with a macOS installer, built for macOS 10.9+, so it runs fine on High Sierra. Do **not** rely on Homebrew there; recent Homebrew has dropped High Sierra support.
+
+Multiple Python versions can coexist in `/Library/Frameworks/Python.framework/Versions/`. After installing, confirm `python3 --version` reports 3.9.13 — if it still shows an older/newer stray install, use the versioned binary explicitly instead: `/Library/Frameworks/Python.framework/Versions/3.9/bin/python3.9`.
 
 ## 2. Clone this repo and install dependencies, on each machine
 
