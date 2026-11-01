@@ -16,6 +16,9 @@ from .config import AppConfig
 from .normalize import track_key
 
 AUDIO_EXTS = {".mp3", ".m4a", ".m4p", ".m4b", ".aac", ".flac", ".alac", ".aiff", ".aif", ".wav", ".ogg", ".wma"}
+# WAV has no standard tagging convention most rippers honor -- no tags there
+# is the normal case, not a sign anything's wrong, so don't warn about it.
+_NO_TAG_WARNING_EXEMPT_EXTS = {".wav"}
 
 
 def iter_audio_files(roots: list[str]):
@@ -44,7 +47,7 @@ def read_tags(path: str):
 
     if mf is not None:
         tags = mf.tags or {}
-        if not tags:
+        if not tags and os.path.splitext(path)[1].lower() not in _NO_TAG_WARNING_EXEMPT_EXTS:
             print(f"  WARNING: file opened but has no tags at all (untagged or DRM?): {path}")
 
         def first(key):
