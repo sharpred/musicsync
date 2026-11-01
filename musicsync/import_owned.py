@@ -36,19 +36,48 @@ def _is_podcast(t: dict) -> bool:
     return False
 
 
-def parse_library_xml(path: str) -> tuple[list[dict], int]:
+# Movies/TV shows/music videos/home videos live in the same Tracks dict too.
+# They can never match anything -- scan.py only ever looks at audio
+# extensions, so a video entry has no file it could possibly match and would
+# always show up as a false "missing everywhere".
+_NON_MUSIC_VIDEO_BOOL_KEYS = ("Movie", "TV Show", "Music Video", "Home Video")
+_NON_MUSIC_VIDEO_KINDS = {"movie", "tv show", "home video", "music video"}
+
+
+def _is_video(t: dict) -> bool:
+    if t.get("Has Video"):
+        return True
+    for key in _NON_MUSIC_VIDEO_BOOL_KEYS:
+        if t.get(key):
+            return True
+    if (t.get("Video Kind") or "").strip().lower() in _NON_MUSIC_VIDEO_KINDS:
+        return True
+    kind = (t.get("Kind") or "").strip().lower()
+    if "video" in kind or "movie" in kind:
+        return True
+    genre = (t.get("Genre") or "").strip().lower()
+    if genre in {"movies", "movie", "tv shows", "tv show"}:
+        return True
+    return False
+
+
+def parse_library_xml(path: str) -> tuple[list[dict], int, int]:
     with open(path, "rb") as f:
         data = plistlib.load(f)
 
     tracks = data.get("Tracks", {})
     records = []
     skipped_podcasts = 0
+    skipped_videos = 0
     for track_id, t in tracks.items():
         name = t.get("Name")
         if not name:
             continue
         if _is_podcast(t):
             skipped_podcasts += 1
+            continue
+        if _is_video(t):
+            skipped_videos += 1
             continue
         artist = t.get("Artist")
         album = t.get("Album")
@@ -64,7 +93,7 @@ def parse_library_xml(path: str) -> tuple[list[dict], int]:
                 has_local_location=has_location,
             )
         )
-    return records, skipped_podcasts
+    return records, skipped_podcasts, skipped_videos
 
 
 def import_owned(config: AppConfig) -> None:
@@ -85,7 +114,7 @@ def import_owned(config: AppConfig) -> None:
         f"then, re-export and re-copy it first)"
     )
 
-    records, skipped_podcasts = parse_library_xml(config.owned_library_xml)
+    records, skipped_podcasts, skipped_videos = parse_library_xml(config.owned_library_xml)
 
     lib_path = os.path.join(config.state_dir, "library.db")
     conn = db.connect(lib_path)
@@ -96,5 +125,5 @@ def import_owned(config: AppConfig) -> None:
 
     print(
         f"Imported {len(records)} owned tracks from {config.owned_library_xml} "
-        f"(skipped {skipped_podcasts} podcast episode(s))"
+        f"(skipped {skipped_podcasts} podcast episode(s), {skipped_videos} movie/TV/video item(s))"
     )

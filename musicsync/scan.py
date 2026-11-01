@@ -84,6 +84,20 @@ def read_tags(path: str):
     if not title:
         title = os.path.splitext(os.path.basename(path))[0]
 
+    # Last resort for files with no usable tags at all (e.g. plain WAV rips,
+    # which have no standard tagging convention): iTunes/Music always lays
+    # ripped files out as Music/<Artist>/<Album>/<Track>.ext, so the two
+    # parent folder names are a reliable stand-in for the missing tags.
+    if not artist:
+        album_dir = os.path.dirname(path)
+        artist_dir = os.path.dirname(album_dir)
+        folder_artist = os.path.basename(artist_dir)
+        folder_album = os.path.basename(album_dir)
+        if folder_artist:
+            artist = folder_artist
+        if not album and folder_album:
+            album = folder_album
+
     return artist, album, title, track_num, duration
 
 
