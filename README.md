@@ -4,6 +4,7 @@ Tracks which music files exist on which of your Macs, and reports:
 
 - Tracks you own that are **missing from the iMac** (but present on another machine), with where they actually are.
 - Tracks you own that are **missing from every machine** entirely (purchased/ripped but not downloaded anywhere).
+- If you run Plex, gaps between your **Mac collection and your Plex library** (see "Syncing a Plex server" below).
 
 Works with any number of machines — add more any time by adding another `[[peers]]` block (see "Adding another machine" below).
 
@@ -15,8 +16,9 @@ One copy of this repo is cloned onto **every machine**. Each machine scans its o
 
 ```
 iMac (agent)   ──┐
-MacAir (agent) ──┼──(SSH pull)──> MacMini (central) ──> library.db ──> report.html / report.csv
-MacPro (agent) ──┘
+MacAir (agent) ──┼──(SSH pull)──────> MacMini (central) ──> library.db ──> report.html / report.csv
+MacPro (agent) ──┘                          ^
+Plex (minisforum.local) ────(HTTP API)──────┘
 MacMini (central, scans itself too)
 ```
 
@@ -147,8 +149,26 @@ Worth doing on demand right after a CD-ripping session or a purchase, rather tha
 
 - **Missing from iMac** — you own it, it's on another machine, but not the iMac. Shows which machine(s) have it.
 - **Missing from every machine** — you own it per `Library.xml` but it isn't on any scanned machine (e.g. a cloud purchase you never downloaded).
+- **On your Macs but not in Plex** / **In Plex but not on any Mac** — only shown if `[plex]` is configured. A direct gap check between your Mac collection and your Plex library, independent of `Library.xml` (so it also catches things never added to your iTunes/Music library at all).
 
 Matching is fuzzy (normalized artist+title, ignoring case/punctuation/"remastered"/"feat." noise) since a CD rip's tags rarely match a purchased copy's exactly. It's tuned for "roughly the same song," not byte-for-byte identity — expect the occasional false match/miss on things like live vs. studio versions of the same title.
+
+## Syncing a Plex server
+
+If you run Plex (e.g. on a Minisforum mini-PC or any other non-Mac box), musicsync can pull its music library in too — via Plex's own HTTP API, not an installed agent, since that box likely isn't macOS and may have no Python/SSH set up at all. Once configured, Plex just becomes another host: it folds into "missing from iMac"/"missing everywhere" (a track in Plex is no longer "missing everywhere"), plus you get the dedicated Mac-vs-Plex gap section above.
+
+1. **Find your Plex token.** Sign into the Plex web app, open any track's "Get Info" → "View XML" link, and copy the `X-Plex-Token=...` value from the URL. (Plex's support site has a walkthrough: search "Finding an authentication token X-Plex-Token".)
+2. **On the central machine's `musicsync.toml`**, add:
+   ```toml
+   [plex]
+   base_url = "http://minisforum.local:32400"
+   token = "YOUR_PLEX_TOKEN"
+   library_section = "Music"   # must match your music library's name in Plex
+   host_label = "Plex"
+   ```
+3. Run `python3 -m musicsync.cli import-plex` on its own to test it, or just `run-central` to include it in the full pipeline. You should see `Imported N tracks from Plex (...)`.
+
+No change needed on the Plex box itself — the central machine just needs network access to it on port 32400 (the default Plex port).
 
 ## Adding another machine
 

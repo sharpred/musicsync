@@ -27,6 +27,14 @@ class PeerConfig:
 
 
 @dataclasses.dataclass
+class PlexConfig:
+    base_url: str
+    token: str
+    library_section: str
+    host_label: str
+
+
+@dataclasses.dataclass
 class AppConfig:
     host_label: str
     role: str
@@ -35,6 +43,7 @@ class AppConfig:
     primary_host: str
     owned_library_xml: str | None
     peers: list[PeerConfig]
+    plex: PlexConfig | None
 
 
 def load_config(path: str) -> AppConfig:
@@ -48,6 +57,16 @@ def load_config(path: str) -> AppConfig:
         peers.append(PeerConfig(**p))
     owned_xml = data.get("owned_library_xml")
 
+    plex_data = data.get("plex")
+    plex = None
+    if plex_data:
+        plex = PlexConfig(
+            base_url=plex_data["base_url"].rstrip("/"),
+            token=plex_data["token"],
+            library_section=plex_data.get("library_section", "Music"),
+            host_label=plex_data.get("host_label", "Plex"),
+        )
+
     return AppConfig(
         host_label=data["host_label"],
         role=data.get("role", "agent"),
@@ -56,4 +75,5 @@ def load_config(path: str) -> AppConfig:
         primary_host=data.get("primary_host", "iMac"),
         owned_library_xml=os.path.expanduser(owned_xml) if owned_xml else None,
         peers=peers,
+        plex=plex,
     )

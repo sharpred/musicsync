@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from . import config as config_mod
-from . import import_owned, merge, pull, report, scan
+from . import import_owned, merge, plex_import, pull, report, scan
 
 
 def main(argv=None) -> int:
@@ -16,8 +16,11 @@ def main(argv=None) -> int:
     sub.add_parser("pull", help="(central only) Pull peers' snapshot.db over SSH")
     sub.add_parser("merge", help="(central only) Merge own + pulled snapshots into library.db")
     sub.add_parser("import-owned", help="(central only) Import Music.app Library.xml as the owned list")
+    sub.add_parser("import-plex", help="(central only) Import your Plex music library over its API")
     sub.add_parser("report", help="(central only) Generate the missing-tracks report")
-    sub.add_parser("run-central", help="(central only) scan + pull + merge + import-owned + report")
+    sub.add_parser(
+        "run-central", help="(central only) scan + pull + merge + import-owned + import-plex + report"
+    )
 
     args = parser.parse_args(argv)
     cfg = config_mod.load_config(args.config)
@@ -30,6 +33,8 @@ def main(argv=None) -> int:
         merge.merge(cfg)
     elif args.command == "import-owned":
         import_owned.import_owned(cfg)
+    elif args.command == "import-plex":
+        plex_import.import_plex(cfg)
     elif args.command == "report":
         report.write_reports(cfg)
     elif args.command == "run-central":
@@ -37,6 +42,7 @@ def main(argv=None) -> int:
         pull.pull(cfg)
         merge.merge(cfg)
         import_owned.import_owned(cfg)
+        plex_import.import_plex(cfg)
         report.write_reports(cfg)
 
     return 0
