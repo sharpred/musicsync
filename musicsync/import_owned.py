@@ -13,6 +13,7 @@ exactly the "what do I own, and is it downloaded here" signal this tool needs.
 
 from __future__ import annotations
 
+import datetime
 import os
 import plistlib
 
@@ -73,6 +74,16 @@ def import_owned(config: AppConfig) -> None:
     if not os.path.exists(config.owned_library_xml):
         print(f"WARNING: owned_library_xml not found: {config.owned_library_xml}")
         return
+
+    mtime = datetime.datetime.fromtimestamp(
+        os.path.getmtime(config.owned_library_xml), tz=datetime.timezone.utc
+    )
+    age = datetime.datetime.now(datetime.timezone.utc) - mtime
+    print(
+        f"Reading {config.owned_library_xml} (exported {mtime.strftime('%Y-%m-%d %H:%M UTC')}, "
+        f"{age.days}d{(age.seconds // 3600)}h ago -- if you added/removed anything since "
+        f"then, re-export and re-copy it first)"
+    )
 
     records, skipped_podcasts = parse_library_xml(config.owned_library_xml)
 

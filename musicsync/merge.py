@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import os
 import sqlite3
 
@@ -9,10 +10,18 @@ from . import db
 from .config import AppConfig
 
 
+def _age_str(path: str) -> str:
+    mtime = datetime.datetime.fromtimestamp(os.path.getmtime(path), tz=datetime.timezone.utc)
+    age = datetime.datetime.now(datetime.timezone.utc) - mtime
+    return f"{mtime.strftime('%Y-%m-%d %H:%M UTC')}, {age.days}d{age.seconds // 3600}h ago"
+
+
 def _merge_snapshot(conn: sqlite3.Connection, snapshot_path: str) -> int:
     if not os.path.exists(snapshot_path):
         print(f"  (missing, skipped: {snapshot_path})")
         return 0
+
+    print(f"  snapshot file last written: {_age_str(snapshot_path)}")
 
     src = sqlite3.connect(snapshot_path)
     src.row_factory = sqlite3.Row

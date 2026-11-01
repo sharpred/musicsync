@@ -7,10 +7,17 @@ instead of hanging on a password prompt.
 
 from __future__ import annotations
 
+import datetime
 import os
 import subprocess
 
 from .config import AppConfig
+
+
+def _age_str(path: str) -> str:
+    mtime = datetime.datetime.fromtimestamp(os.path.getmtime(path), tz=datetime.timezone.utc)
+    age = datetime.datetime.now(datetime.timezone.utc) - mtime
+    return f"{mtime.strftime('%Y-%m-%d %H:%M UTC')}, {age.days}d{age.seconds // 3600}h ago"
 
 
 def pull(config: AppConfig) -> None:
@@ -35,6 +42,10 @@ def pull(config: AppConfig) -> None:
         print(f"Pulling {peer.label} ({remote}) -> {dest}")
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
-            print(f"  WARNING: pull from {peer.label} failed: {result.stderr.strip()}")
+            if os.path.exists(dest):
+                staleness = f"merge will reuse the STALE copy from {_age_str(dest)}"
+            else:
+                staleness = "no previous copy exists either, so this peer will be MISSING from the report entirely"
+            print(f"  WARNING: pull from {peer.label} failed ({staleness}): {result.stderr.strip()}")
         else:
             print("  OK")
