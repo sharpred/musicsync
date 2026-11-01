@@ -62,9 +62,13 @@ def read_tags(path: str):
             v = tags.get(key)
             return v[0] if v else None
 
-        artist = first("artist")
-        album = first("album")
-        title = first("title")
+        # Fall back to the sort-order fields (artistsort/albumsort/titlesort)
+        # when the main display fields are empty -- same information, and
+        # some files end up with only the sort fields populated (e.g. a
+        # tagging tool that wrote sort order but dropped the display tags).
+        artist = first("artist") or first("artistsort")
+        album = first("album") or first("albumsort")
+        title = first("title") or first("titlesort")
         tracknumber = first("tracknumber")
         if tracknumber:
             try:
