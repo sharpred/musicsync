@@ -19,6 +19,11 @@ AUDIO_EXTS = {".mp3", ".m4a", ".m4p", ".m4b", ".aac", ".flac", ".alac", ".aiff",
 # WAV has no standard tagging convention most rippers honor -- no tags there
 # is the normal case, not a sign anything's wrong, so don't warn about it.
 _NO_TAG_WARNING_EXEMPT_EXTS = {".wav"}
+# Apple package bundles that can contain non-music audio assets (UI sound
+# effects, etc.) alongside real tracks -- .itlp is the old (2009-2011)
+# "iTunes LP" interactive/enhanced album format. Their contents aren't songs
+# and shouldn't be scanned as if they were.
+_SKIP_BUNDLE_EXTS = {".itlp", ".ite"}
 
 
 def iter_audio_files(roots: list[str]):
@@ -26,7 +31,10 @@ def iter_audio_files(roots: list[str]):
         if not os.path.isdir(root):
             print(f"  WARNING: music root does not exist, skipping: {root}")
             continue
-        for dirpath, _dirnames, filenames in os.walk(root):
+        for dirpath, dirnames, filenames in os.walk(root):
+            dirnames[:] = [
+                d for d in dirnames if os.path.splitext(d)[1].lower() not in _SKIP_BUNDLE_EXTS
+            ]
             for fn in filenames:
                 if os.path.splitext(fn)[1].lower() in AUDIO_EXTS:
                     yield os.path.join(dirpath, fn)

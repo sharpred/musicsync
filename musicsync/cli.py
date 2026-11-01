@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from . import config as config_mod
-from . import debug_track, import_owned, merge, playlist, plex_import, pull, report, scan
+from . import debug_file, debug_track, import_owned, merge, playlist, plex_import, pull, report, scan
 
 
 def main(argv=None) -> int:
@@ -30,8 +30,18 @@ def main(argv=None) -> int:
         help="(central only) Print owned+files rows matching a search term, with their track_key",
     )
     debug_parser.add_argument("query", help="Substring to search for in artist/title/album")
+    debug_file_parser = sub.add_parser(
+        "debug-file",
+        help="Dump every raw tag mutagen finds in one file (no musicsync.toml needed)",
+    )
+    debug_file_parser.add_argument("path", help="Path to the audio file to inspect")
 
     args = parser.parse_args(argv)
+
+    if args.command == "debug-file":
+        debug_file.debug_file(args.path)
+        return 0
+
     cfg = config_mod.load_config(args.config)
 
     if args.command == "scan":
