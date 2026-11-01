@@ -62,11 +62,13 @@ def read_tags(path: str):
             v = tags.get(key)
             return v[0] if v else None
 
-        # Fall back to the sort-order fields (artistsort/albumsort/titlesort)
-        # when the main display fields are empty -- same information, and
-        # some files end up with only the sort fields populated (e.g. a
-        # tagging tool that wrote sort order but dropped the display tags).
-        artist = first("artist") or first("artistsort")
+        # Fall back when the main display fields are empty: artistsort/
+        # albumsort/titlesort carry the same info some files only populate
+        # those, e.g. a tagging tool that wrote sort order but dropped the
+        # display tags (the Baltimore case). For artist specifically, also
+        # fall back to albumartist -- plenty of single-artist-album rips
+        # only have Album Artist set and leave the per-track Artist blank.
+        artist = first("artist") or first("artistsort") or first("albumartist")
         album = first("album") or first("albumsort")
         title = first("title") or first("titlesort")
         tracknumber = first("tracknumber")
