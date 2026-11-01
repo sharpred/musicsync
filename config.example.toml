@@ -63,3 +63,15 @@ remote_snapshot_path = "/Users/paulryan/.musicsync/snapshot.db"
 # host = "macpro.local"
 # ssh_key = "~/.ssh/musicsync_ed25519"
 # remote_snapshot_path = "/Users/paulryan/.musicsync/snapshot.db"
+
+# Optional: your Plex server's music library, pulled over Plex's own HTTP
+# API rather than SSH (Plex boxes are often not macOS, so no agent needed
+# there at all). Plex becomes just another host in the report -- it folds
+# into "missing from iMac"/"missing everywhere" automatically, plus you get
+# a dedicated "on Macs but not in Plex" / "in Plex but not on any Mac"
+# section. See the README for how to find your X-Plex-Token.
+# [plex]
+# base_url = "http://minisforum.local:32400"
+# token = "YOUR_PLEX_TOKEN"
+# library_section = "Music"   # the name of your music library in Plex
+# host_label = "Plex"
