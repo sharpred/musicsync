@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from . import config as config_mod
-from . import import_owned, merge, plex_import, pull, report, scan
+from . import debug_track, import_owned, merge, playlist, plex_import, pull, report, scan
 
 
 def main(argv=None) -> int:
@@ -19,8 +19,17 @@ def main(argv=None) -> int:
     sub.add_parser("import-plex", help="(central only) Import your Plex music library over its API")
     sub.add_parser("report", help="(central only) Generate the missing-tracks report")
     sub.add_parser(
-        "run-central", help="(central only) scan + pull + merge + import-owned + import-plex + report"
+        "playlists", help="(central only) Write .m3u8 playlists of tracks missing from the primary host"
     )
+    sub.add_parser(
+        "run-central",
+        help="(central only) scan + pull + merge + import-owned + import-plex + report + playlists",
+    )
+    debug_parser = sub.add_parser(
+        "debug-track",
+        help="(central only) Print owned+files rows matching a search term, with their track_key",
+    )
+    debug_parser.add_argument("query", help="Substring to search for in artist/title/album")
 
     args = parser.parse_args(argv)
     cfg = config_mod.load_config(args.config)
@@ -37,6 +46,8 @@ def main(argv=None) -> int:
         plex_import.import_plex(cfg)
     elif args.command == "report":
         report.write_reports(cfg)
+    elif args.command == "playlists":
+        playlist.write_missing_playlists(cfg)
     elif args.command == "run-central":
         scan.main(cfg)
         pull.pull(cfg)
@@ -44,6 +55,9 @@ def main(argv=None) -> int:
         import_owned.import_owned(cfg)
         plex_import.import_plex(cfg)
         report.write_reports(cfg)
+        playlist.write_missing_playlists(cfg)
+    elif args.command == "debug-track":
+        debug_track.debug_track(cfg, args.query)
 
     return 0
 

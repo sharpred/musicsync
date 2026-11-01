@@ -2,7 +2,7 @@
 
 Tracks which music files exist on which of your Macs, and reports:
 
-- Tracks you own that are **missing from the iMac** (but present on another machine), with where they actually are.
+- Tracks you own that are **missing from the iMac** (but present on another machine), with where they actually are -- plus a ready-to-import `.m3u8` playlist of exactly those tracks (see "Playlists" below).
 - Tracks you own that are **missing from every machine** entirely (purchased/ripped but not downloaded anywhere).
 - If you run Plex, gaps between your **Mac collection and your Plex library** (see "Syncing a Plex server" below).
 
@@ -24,6 +24,11 @@ MacMini (central, scans itself too)
 
 Everything is plain files (sqlite + a Python stdlib/mutagen script) — no server process, no daemon beyond a monthly launchd timer.
 
+### Two separate folders — don't confuse them
+
+- **The repo (this code)** can live *anywhere* on each machine — wherever you cloned or copied it. This README writes `~/musicsync` in commands purely as a short example path; your actual clone might be at `/Users/paulryan/Documents/projects.nosync/python/musicsync`, or anywhere else, and it doesn't need to match on every machine. Wherever you see `cd ~/musicsync` below, substitute wherever you actually put it on that machine.
+- **`~/.musicsync`** (note the leading dot — a different, unrelated path) is created *automatically* and holds only generated artifacts: `snapshot.db`, pulled peer snapshots, the merged `library.db`, the `Library.xml` you copy in, and the `reports/` folder. It never contains code, and you shouldn't need to touch it directly. It's configurable via `state_dir` in `musicsync.toml` if you want it somewhere else, but the default is fine for almost everyone.
+
 ## 1. Install Python 3 on all three Macs
 
 This Mac Air and the Mac mini are on a current macOS and likely already have Python 3. Check:
@@ -39,8 +44,8 @@ Multiple Python versions can coexist in `/Library/Frameworks/Python.framework/Ve
 ## 2. Clone this repo and install dependencies, on each machine
 
 ```sh
-git clone <this-repo-url> ~/musicsync   # or copy the folder however you like
-cd ~/musicsync
+git clone <this-repo-url> ~/musicsync   # pick any path/location you like -- ~/musicsync is just this README's example
+cd ~/musicsync                          # cd into wherever you actually put it, every time you see this below
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -151,7 +156,25 @@ Worth doing on demand right after a CD-ripping session or a purchase, rather tha
 - **Missing from every machine** — you own it per `Library.xml` but it isn't on any scanned machine (e.g. a cloud purchase you never downloaded).
 - **On your Macs but not in Plex** / **In Plex but not on any Mac** — only shown if `[plex]` is configured. A direct gap check between your Mac collection and your Plex library, independent of `Library.xml` (so it also catches things never added to your iTunes/Music library at all).
 
-Matching is fuzzy (normalized artist+title, ignoring case/punctuation/"remastered"/"feat." noise) since a CD rip's tags rarely match a purchased copy's exactly. It's tuned for "roughly the same song," not byte-for-byte identity — expect the occasional false match/miss on things like live vs. studio versions of the same title.
+Matching is fuzzy (normalized artist+title, ignoring case/punctuation/"remastered"/"feat." noise) since a CD rip's tags rarely match a purchased copy's exactly. It's tuned for "roughly the same song," not byte-for-byte identity — expect the occasional false match/miss on things like live vs. studio versions of the same title. One specific thing it now corrects for: CD rips sourced from CDDB/Gracenote sometimes embed the track number right into the title tag ("02 Baltimore" instead of "Baltimore") -- that's stripped before matching, title-only (never from artist names, so numeric artists like "3 Doors Down" are untouched).
+
+## Diagnosing a false missing/present result
+
+If the report says a track is missing and you know it isn't (or vice versa), run this on the central machine to see exactly what's stored for it:
+
+```sh
+python3 -m musicsync.cli debug-track "Baltimore"
+```
+
+This prints every `owned` row and every `files` row whose artist/title/album contains that text, each with its computed `track_key`. If a track should match but doesn't, the `track_key` values will differ -- compare the raw `artist`/`title` fields above them to see which one disagrees (a stray word, a tag that's blank on one side, a track-number prefix, etc.). No matches under "files rows" at all usually means that machine's `scan` never covered the file -- check its `music_roots`.
+
+## Playlists of what's missing from the iMac
+
+`python3 -m musicsync.cli playlists` (also runs automatically as part of `run-central`) writes a real, importable `.m3u8` playlist for every "missing from iMac" track -- one file per source machine, at `~/.musicsync/playlists/missing_from_iMac__<host>.m3u8` on the central machine.
+
+This only covers tracks that are **missing from iMac but present somewhere else** -- a playlist can only point at a file that actually exists, so there's nothing to generate for "missing from every machine" (no file anywhere = nothing to link to; keep using the CSV/HTML list for those, to search/re-download manually). Plex is excluded from playlist generation for the same reason: those paths live on the Plex server's filesystem, which doesn't run Music.app/iTunes.
+
+To use one: copy the relevant `.m3u8` file to the machine named in its filename (it's useless anywhere else, since the paths inside are only valid on that machine), then on that machine open **Music.app/iTunes → File → Library → Import Playlist...** and pick it. You'll get a playlist of exactly the tracks the iMac is missing, ready to select and copy across.
 
 ## Syncing a Plex server
 
