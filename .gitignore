@@ -4,3 +4,11 @@
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# musicsync: per-machine config/state, never committed
+musicsync.toml
+.musicsync/
+__pycache__/
+*.pyc
+.venv/
+logs/

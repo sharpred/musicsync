@@ -1,0 +1,54 @@
+# Copy this to musicsync.toml on EACH machine and edit it there.
+# musicsync.toml is gitignored on purpose -- every machine's copy differs
+# (different user, different music folder, only the central one has peers).
+
+# Short label used in reports. Use the same three labels everywhere: "iMac", "MacAir", "MacMini".
+host_label = "MacMini"
+
+# "central" = this machine pulls from the other two, merges, and reports.
+# "agent"   = this machine only scans itself and waits to be pulled from.
+# Pick ONE machine as central (Air or mini, per the setup chat -- mini recommended
+# as the one most likely to be always-on).
+role = "central"
+
+# Folders to scan on THIS machine. Typical Music.app location (modern macOS):
+#   ~/Music/Music/Media.localized/Music
+# Typical iTunes location (macOS 10.13 High Sierra and earlier):
+#   ~/Music/iTunes/iTunes Media/Music
+music_roots = [
+  "~/Music/Music/Media.localized/Music",
+]
+
+# Where musicsync keeps its own state (snapshot.db, pulled snapshots, the
+# merged library.db, and generated reports). Fine to leave as-is.
+state_dir = "~/.musicsync"
+
+# The host_label that should have everything (your iMac, per the setup chat).
+# The "missing from <primary_host>" report section is relative to this.
+primary_host = "iMac"
+
+# --- central-only settings below ---
+
+# Path to a Library.xml exported from Music.app via:
+#   File > Library > Export Library...
+# (NOT "Export Playlist" on a Purchased smart list -- that skips any
+# purchased-but-not-downloaded track entirely. See import_owned.py docstring.)
+owned_library_xml = "~/.musicsync/Library.xml"
+
+# The other two machines, pulled over SSH using a dedicated key (see
+# scripts/setup_ssh.sh and the README). remote_snapshot_path is wherever
+# THAT machine's own state_dir/snapshot.db ends up -- i.e. "<their
+# state_dir>/snapshot.db".
+[[peers]]
+label = "iMac"
+user = "paulryanwork"
+host = "imac.local"
+ssh_key = "~/.ssh/musicsync_ed25519"
+remote_snapshot_path = "/Users/paulryanwork/.musicsync/snapshot.db"
+
+[[peers]]
+label = "MacAir"
+user = "paulryan"
+host = "macair.local"
+ssh_key = "~/.ssh/musicsync_ed25519"
+remote_snapshot_path = "/Users/paulryan/.musicsync/snapshot.db"

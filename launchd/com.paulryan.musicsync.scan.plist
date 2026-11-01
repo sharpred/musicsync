@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Runs the LOCAL scan on this machine once a month -- the 1st at 02:00.
+  (You can also always run a scan on demand: see the README "Running it
+  on demand" section.)
+  Install on EVERY machine (iMac, MacAir, MacMini) -- including the central
+  one, since it needs to scan its own music too.
+
+  Before installing, replace __REPO_DIR__ below with the absolute path to
+  this repo on THIS machine, e.g. /Users/paulryan/musicsync. The README has
+  the exact sed command.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.paulryan.musicsync.scan</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__REPO_DIR__/scripts/run_scan.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Day</key>
+        <integer>1</integer>
+        <key>Hour</key>
+        <integer>2</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>__REPO_DIR__/logs/scan.log</string>
+    <key>StandardErrorPath</key>
+    <string>__REPO_DIR__/logs/scan.err.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

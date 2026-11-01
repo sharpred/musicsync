@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Runs pull + merge + import-owned + report on the CENTRAL machine only,
+  once a month -- the 1st at 03:00, an hour after the scan plist, to give
+  both peers time to finish their own local scans first. (You can also
+  always run this on demand: see the README "Running it on demand" section.)
+
+  Before installing, replace __REPO_DIR__ below with the absolute path to
+  this repo on the central machine. The README has the exact sed command.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.paulryan.musicsync.central</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__REPO_DIR__/scripts/run_central.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Day</key>
+        <integer>1</integer>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>__REPO_DIR__/logs/central.log</string>
+    <key>StandardErrorPath</key>
+    <string>__REPO_DIR__/logs/central.err.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
